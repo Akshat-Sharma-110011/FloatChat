@@ -1,0 +1,26 @@
+:root {
+  --background-color: #ffffff;
+  --text-color: #333333;
+  --card-bg-color: #f8f9fa;
+  --chart-line-color: #6c757d;
+  --grid-line-color: #e9ecef;
+}
+
+body.dark-mode {
+  --background-color: #121212;
+  --text-color: #e0e0e0;
+  --card-bg-color: #1e1e1e;
+  --chart-line-color: #adb5bd;
+  --grid-line-color: #333333;
+}
+
+body {
+  background-color: var(--background-color);
+  color: var(--text-color);
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.card {
+  background-color: var(--card-bg-color);
+  border: 1px solid var(--grid-line-color);
+}

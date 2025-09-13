@@ -1,0 +1,12 @@
+<div class="alert alert-info">
+  <strong>Selected:</strong> 
+  <% if (typeof parameter !== 'undefined' && parameter) { %>
+    <%= parameter %>
+  <% } else { %>
+    No parameter
+  <% } %>
+  
+  <% if (Array.isArray(selectedRegion) && selectedRegion.length > 0) { %>
+    in <%= selectedRegion.join(' and ') %>
+  <% } %>
+</div>

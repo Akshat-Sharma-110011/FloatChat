@@ -1,0 +1,70 @@
+<%
+    let safeChartData = { labels: [], datasets: [] };
+    let safeParameter = "salinity";
+    let safeSelectedRegion = [];
+    
+    try {
+        if (typeof chartData !== 'undefined') {
+            safeChartData = chartData;
+        }
+        if (typeof parameter !== 'undefined') {
+            safeParameter = parameter;
+        }
+        if (typeof selectedRegion !== 'undefined') {
+            safeSelectedRegion = selectedRegion;
+        }
+    } catch (e) {
+        // Fallback to defaults on error
+    }
+%>
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">Chart</h5>
+        <% if (safeChartData.datasets && safeChartData.datasets.length > 0) { %>
+            <canvas id="oceanChart"></canvas>
+        <% } else { %>
+            <p class="text-muted text-center">Select a region and a parameter to view the data.</p>
+        <% } %>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    const chartData = JSON.parse('<%- JSON.stringify(safeChartData) %>');
+    const parameter = "<%- safeParameter %>";
+
+    document.addEventListener("DOMContentLoaded", () => {
+        if (!chartData || chartData.datasets.length === 0) {
+            return;
+        }
+        
+        const ctx = document.getElementById("oceanChart").getContext("2d");
+
+        if (window.myChart) {
+            window.myChart.destroy();
+        }
+
+        window.myChart = new Chart(ctx, {
+            type: "line",
+            data: {
+                labels: chartData.labels,
+                datasets: chartData.datasets
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: "<%- safeParameter.toUpperCase() %> Trends",
+                    },
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                    },
+                },
+            },
+        });
+    });
+</script>

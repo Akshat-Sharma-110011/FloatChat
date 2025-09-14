@@ -1,0 +1,340 @@
+# FloatChat Configuration - intel.yaml
+# Production-Ready LLMOps & RAG Architecture Configuration
+# This file contains all key paths and constants for reproducibility
+
+# Python environment
+python_version: 3.11
+
+# Data paths and sources
+data:
+  # Raw ARGO NetCDF files
+  raw_dir: data/raw/argo/
+  raw_file: data/raw/argo/argo_profiles_raw.nc
+
+  # Processed data storage
+  processed_sql: data/processed/argo_profiles.sqlite
+  processed_parquet: data/processed/argo_profiles.parquet
+
+  # Vector index and embeddings
+  index_dir: data/index/
+  chunks_file: data/processed/argo_chunks.json
+
+# Vector store configuration
+vector_store:
+  type: faiss
+  path: data/index/faiss_index/
+  index_file: data/index/faiss_index/faiss.index
+  metadata_file: data/index/faiss_index/metadata.pkl
+  config_snapshot: data/index/faiss_index/config_snapshot.yaml
+  index_info: data/index/faiss_index/index_info.json
+
+# Embedding configuration
+embeddings:
+  # SentenceTransformers model for embedding generation
+  model_name: all-MiniLM-L6-v2
+  # Alternative models:
+  # model_name: all-mpnet-base-v2      # Higher quality, slower
+  # model_name: paraphrase-MiniLM-L6-v2 # Good for paraphrases
+  batch_size: 32
+  normalize_embeddings: true
+  dimension: 384  # Automatically set based on model
+
+# Database configuration
+database:
+  type: postgresql
+  url: postgresql://postgres:Strong.password177013@localhost:6000/floatchat
+
+  # Table names
+  table_trajectories: trajectory
+  table_profiles: profiles
+
+  # Connection settings
+  pool_size: 5
+  max_overflow: 10
+  pool_timeout: 30
+
+# MCP Server configuration
+mcp:
+  # Available tools
+  tools:
+    - retrieve_docs
+    - query_sql
+    - plot_timeseries
+    - classify_intent
+
+  # MCP server script
+  server_script: servers/mcp_float/server.py
+
+  # Intent classification
+  intent_classification:
+    enabled: true
+    model_name: facebook/bart-large-mnli
+    confidence_threshold: 0.3
+    hybrid_weighting:
+      rule_based: 0.7
+      ml_based: 0.3
+
+# LLM configuration
+llm:
+  # Primary model for LangGraph
+  model: mistral-medium
+  # Alternative free models:
+  # model: microsoft/DialoGPT-medium
+  # model: facebook/blenderbot-400M-distill
+
+  max_tokens: 1024
+  temperature: 0.1
+  top_p: 0.9
+
+  # Model parameters
+  context_window: 4096
+  streaming: true
+
+# LangGraph configuration
+langgraph:
+  entrypoint: src/graph/app.py
+
+  # Graph configuration
+  max_iterations: 10
+  recursion_limit: 50
+
+  # State management
+  checkpointing: true
+  memory_store: sqlite
+  memory_path: data/processed/graph_memory.db
+
+# API configuration
+api:
+  host: 0.0.0.0
+  port: 8000
+
+  # CORS settings
+  allowed_origins:
+    - "*"
+  allowed_methods:
+    - GET
+    - POST
+    - OPTIONS
+  allowed_headers:
+    - "*"
+
+  # Authentication
+  auth:
+    guest_mode: true
+    guest_key: floatchat-guest-2024
+    require_auth: false
+
+# Logging configuration
+logging:
+  level: INFO
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+  # Log files
+  directory: logs/
+  max_file_size: 50MB
+  backup_count: 5
+
+  # Component-specific logging
+  loggers:
+    DataSplitter: INFO
+    EmbeddingIngestor: INFO
+    Retriever: INFO
+    MCPServer: INFO
+    IntentClassifier: INFO
+
+# Data processing configuration
+processing:
+  # Chunking parameters
+  chunk_size_limit: 2000
+  overlap_strategy: timestamp_based
+
+  # Embedding batch processing
+  embedding_batch_size: 32
+  max_workers: 4
+
+  # Memory management
+  max_memory_usage: 8GB
+  cleanup_intermediate: true
+
+# Plotting configuration
+plotting:
+  # Output settings
+  output_dir: data/index/
+  dpi: 300
+  format: png
+
+  # Style settings
+  style: seaborn-v0_8
+  figure_size: [12, 8]
+  color_palette: husl
+
+  # Plot types
+  supported_types:
+    - line
+    - scatter
+    - histogram
+    - depth_profile
+    - scatter_matrix
+
+# Performance and optimization
+performance:
+  # FAISS index settings
+  faiss_index_type: IndexFlatIP
+  faiss_nprobe: 10
+
+  # Query limits
+  max_sql_rows: 10000
+  max_search_results: 100
+  query_timeout: 30
+
+  # Caching
+  enable_caching: true
+  cache_ttl: 3600
+  cache_size: 1000
+
+# Data validation
+validation:
+  # Required columns for ARGO data
+  required_columns:
+    - basin
+    - timestamp
+    - cycle_number
+    - vertical_sampling_scheme
+    - longitude
+    - latitude
+    - pressure_decibar
+    - salinity_psu
+    - temperature_degc
+
+  # Data quality thresholds
+  quality_thresholds:
+    min_temperature: -5.0
+    max_temperature: 40.0
+    min_salinity: 25.0
+    max_salinity: 45.0
+    min_pressure: 0.0
+    max_pressure: 3000.0
+
+# Security configuration
+security:
+  # SQL query validation
+  sql_validation:
+    enabled: true
+    allowed_keywords:
+      - select
+      - from
+      - where
+      - group
+      - by
+      - order
+      - limit
+      - having
+      - and
+      - or
+      - not
+      - in
+      - like
+      - between
+
+    forbidden_keywords:
+      - drop
+      - delete
+      - insert
+      - update
+      - create
+      - alter
+      - truncate
+      - exec
+      - execute
+
+    allowed_tables:
+      - profiles
+      - trajectory
+      - measurements
+
+    max_joins: 5
+    max_unions: 3
+
+# Deployment configuration
+deployment:
+  environment: production
+
+  # Docker settings
+  docker:
+    image_name: floatchat
+    image_tag: latest
+
+  # Health checks
+  health_check:
+    enabled: true
+    interval: 30
+    timeout: 10
+    retries: 3
+
+  # Monitoring
+  monitoring:
+    metrics_enabled: true
+    metrics_port: 9090
+    log_monitoring: true
+
+# Feature flags
+features:
+  # Experimental features
+  experimental:
+    advanced_chunking: false
+    multi_model_ensemble: false
+    real_time_indexing: false
+
+  # Production features
+  production:
+    intent_detection: true
+    query_validation: true
+    result_caching: true
+    performance_monitoring: true
+
+# External services (if needed)
+external:
+  # Hugging Face settings
+  huggingface:
+    cache_dir: ~/.cache/huggingface/
+    offline_mode: false
+
+  # Optional: OpenAI API (not used by default)
+  openai:
+    api_key: ${OPENAI_API_KEY:-}
+    model: gpt-3.5-turbo
+    enabled: false
+
+# Development settings
+development:
+  debug: false
+  hot_reload: false
+  profiling: false
+
+  # Testing
+  test_data_limit: 1000
+  mock_external_services: false
+
+# Version information
+version:
+  floatchat: "1.0.0"
+  config_version: "1.0.0"
+  last_updated: "2025-01-XX"
+
+# Comments and documentation
+_metadata:
+  description: "FloatChat production configuration for ARGO oceanographic data RAG system"
+  maintainer: "FloatChat Team"
+  documentation: "https://github.com/floatchat/floatchat"
+
+  # Configuration sections
+  sections:
+    data: "Data paths and storage configuration"
+    vector_store: "FAISS vector database settings"
+    embeddings: "Sentence transformer embedding configuration"
+    database: "PostgreSQL database connection and settings"
+    mcp: "Model Context Protocol server configuration"
+    llm: "Large Language Model settings"
+    api: "FastAPI web server configuration"
+    security: "Security validation and restrictions"
+    performance: "Performance optimization settings"

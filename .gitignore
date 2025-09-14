@@ -7,7 +7,9 @@ __pycache__/
 *.so
 
 
-data/
+data/index
+data/processed
+data/raw
 
 
 # Distribution / packaging
